@@ -1,6 +1,5 @@
 import argparse
-from diffusers import StableDiffusionPipeline, DPMSolverMultistepScheduler
-from optimum.intel import OVStableDiffusionPipeline
+from diffusers import DPMSolverMultistepScheduler
 import os
 import torch
 
@@ -36,9 +35,12 @@ if __name__ == "__main__":
     text_inputs = parse_text_inputs(text_inputs_file)
 
     if args.backend == "ov":
+        from optimum.intel import OVStableDiffusionPipeline
         model_id = args.model
         pipe = OVStableDiffusionPipeline.from_pretrained(model_id, compile=False).to(args.device)
+        pipe.scheduler = DPMSolverMultistepScheduler.from_config(pipe.scheduler.config)
     elif args.backend == "pt":
+        from diffusers import StableDiffusionPipeline
         model_id = args.model
         pipe = StableDiffusionPipeline.from_pretrained(model_id, cache_dir=args.cache_dir, torch_dtype=torch.float16, compile=False)
         pipe.scheduler = DPMSolverMultistepScheduler.from_config(pipe.scheduler.config)
@@ -47,8 +49,14 @@ if __name__ == "__main__":
     else:
         assert False
 
+    # if run stopped in-between, to reduce redundancy
+    files = os.listdir(args.output_dir)
+
     for text_input in text_inputs:
         id = text_input["id"]
+        if f"{id}.png" in files:
+            print(f"{id}.png exists, so skipping it...")
+            continue
         prompt = text_input["caption"]
         image = pipe(prompt).images[0]
         image.save(os.path.join(args.output_dir, f"{id}.png"))

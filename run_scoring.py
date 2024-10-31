@@ -1,7 +1,6 @@
 import argparse
 import json
 import os
-import pandas as pd
 from tifascore import tifa_score_benchmark
 
 

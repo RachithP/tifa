@@ -54,7 +54,7 @@ if __name__ == "__main__":
 
     print("Loaded the models, starting generation now ", datetime.now())
 
-    # if run stopped in-between, to reduce redundancy
+    # if run stopped in-between, to reduce redundancy disregard images already generated
     files = os.listdir(args.output_dir)
 
     id_to_img_paths = {}

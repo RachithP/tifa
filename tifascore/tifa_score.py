@@ -4,25 +4,29 @@ from tqdm import tqdm
 from .vqa_models import VQAModel
 from statistics import mean, stdev
 
-def tifa_score_benchmark(vqa_model_name, question_answer_path, id2img_path):
-    
+def tifa_score_benchmark(vqa_model_name, question_answer_path, id2img_path, element_type):
+
     # load the questions and answers
     with open(question_answer_path) as f:
         question_answer_pairs = json.load(f)
-    
+
     # load the image paths    
     with open(id2img_path) as f:
         caption_id2img_fn = json.load(f)
     id2img_parent_path = os.path.dirname(id2img_path)
-    
+
     # load the VQA model
     vqa_model = VQAModel(vqa_model_name)
-    
+
     tifa_statistics = {"scores": defaultdict(list), 
                     "type_scores": defaultdict(list)}
     question_logs = defaultdict(dict)
-    
+
     for question_answer_pair in tqdm(question_answer_pairs):
+
+        if element_type and question_answer_pair['element_type'] != element_type: #"color", "animal/human":
+            continue
+
         # get text input id
         caption_id = question_answer_pair['id']
         
